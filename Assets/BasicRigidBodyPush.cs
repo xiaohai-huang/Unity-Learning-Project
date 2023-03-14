@@ -16,15 +16,14 @@ public class BasicRigidBodyPush : NetworkBehaviour
             {
                 var bodyLayerMask = 1 << hit.collider.attachedRigidbody.gameObject.layer;
                 if ((bodyLayerMask & pushLayers.value) == 0) return;
-                PushItemServerRpc(hit.gameObject.GetComponent<NetworkObject>(), hit.moveDirection);
+                PushItemServerRpc(hit.gameObject.GetComponent<NetworkObject>(), hit.point - transform.position);
             }
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void PushItemServerRpc(NetworkObjectReference objToPush, Vector3 moveDirection)
+    public void PushItemServerRpc(NetworkObjectReference objToPush, Vector3 pushDirection)
     {
-
         var obj = NetworkManager.Singleton.SpawnManager.SpawnedObjects[objToPush.NetworkObjectId].gameObject;
         // https://docs.unity3d.com/ScriptReference/CharacterController.OnControllerColliderHit.html
         // make sure we hit a non kinematic rigidbody
@@ -35,14 +34,8 @@ public class BasicRigidBodyPush : NetworkBehaviour
         var bodyLayerMask = 1 << body.gameObject.layer;
         if ((bodyLayerMask & pushLayers.value) == 0) return;
 
-        // We dont want to push objects below us
-        if (moveDirection.y < -0.3f) return;
-
-        // Calculate push direction from move direction, horizontal motion only
-        Vector3 pushDir = new Vector3(moveDirection.x, 0.0f, moveDirection.z);
-
-        // Apply the push and take strength into account
-        body.velocity = (pushDir * strength);
+        pushDirection.y = 0;
+        body.AddForce(pushDirection.normalized * strength, ForceMode.Impulse);
     }
  
 }
