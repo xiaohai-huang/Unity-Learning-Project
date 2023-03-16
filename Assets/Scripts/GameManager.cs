@@ -16,9 +16,6 @@ public class GameManager : MonoBehaviour
         // Set the target frame rate to the max capability of the screen
         Application.targetFrameRate = Mathf.CeilToInt((float)Screen.currentResolution.refreshRateRatio.value);
 #endif
-
-
         UnityEngine.Rendering.DebugManager.instance.enableRuntimeUI = false;
-
     }
 }

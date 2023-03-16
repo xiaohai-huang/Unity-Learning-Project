@@ -9,7 +9,10 @@ public class InputReader : ScriptableObject, MyGameInputActions.IGamePlayActionM
     public event UnityAction<bool> OnSprintChanged;
     public event UnityAction OnJumpStarted;
     public event UnityAction<Vector2> OnLookEvent;
-    
+    public event UnityAction OnAttackStartedEvent;
+    public event UnityAction OnAttackEndEvent;
+
+
 
     private MyGameInputActions _inputActions;
 
@@ -73,5 +76,18 @@ public class InputReader : ScriptableObject, MyGameInputActions.IGamePlayActionM
     public void OnLook(InputAction.CallbackContext context)
     {
         OnLookEvent?.Invoke(context.ReadValue<Vector2>());
+    }
+
+    public void OnAttack(InputAction.CallbackContext context)
+    {
+        if (context.phase == InputActionPhase.Performed)
+        {
+            OnAttackStartedEvent?.Invoke();
+        }
+        else if(context.phase == InputActionPhase.Canceled)
+        {
+            OnAttackEndEvent?.Invoke();
+        }
+        
     }
 }

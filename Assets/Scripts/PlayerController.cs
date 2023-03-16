@@ -35,6 +35,9 @@ public class PlayerController : NetworkBehaviour
         _animator = GetComponent<Animator>();
         _clientNetworkAnimator = GetComponent<ClientNetworkAnimator>();
         _characterController = GetComponent<CharacterController>();
+#if !UNITY_EDITOR
+        SinglePlayerMode = false;
+#endif
     }
 
     void Start()
@@ -73,7 +76,14 @@ public class PlayerController : NetworkBehaviour
     {
         if (_characterController.isGrounded)
         {
-            _clientNetworkAnimator.SetTrigger(JUMP_ANIMATION_ID);
+            if (SinglePlayerMode) 
+            {
+                _animator.SetTrigger(JUMP_ANIMATION_ID);
+            }
+            else
+            {
+                _clientNetworkAnimator.SetTrigger(JUMP_ANIMATION_ID);
+            }
             // Prevent the character from moving, because the player is in preparing jump motion
             lockHorizontalMovement = true;
         }
@@ -84,7 +94,14 @@ public class PlayerController : NetworkBehaviour
         {
             float jumpHeight = 1.5f;
             _verticalSpeed = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
-            _clientNetworkAnimator.ResetTrigger(JUMP_ANIMATION_ID);
+            if (SinglePlayerMode)
+            {
+                _animator.ResetTrigger(JUMP_ANIMATION_ID);
+            }
+            else
+            {
+                _clientNetworkAnimator.ResetTrigger(JUMP_ANIMATION_ID);
+            }
             lockHorizontalMovement = false;
         }
     }
@@ -153,3 +170,4 @@ public class PlayerController : NetworkBehaviour
         _animator.SetBool("Grounded", _grounded);
     }
 }
+

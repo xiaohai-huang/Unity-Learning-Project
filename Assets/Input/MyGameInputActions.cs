@@ -62,6 +62,15 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Attack"",
+                    ""type"": ""Button"",
+                    ""id"": ""c54730e9-9ebf-4bf4-8ecd-21754db8ea9c"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -174,6 +183,28 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Look"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3bf6fa85-d7f5-405e-b3f0-27582aebc9c9"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard Mouse"",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""09389308-f6f4-4163-84fc-a9be5602f9e0"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -197,6 +228,7 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
         m_GamePlayActionMap_Sprint = m_GamePlayActionMap.FindAction("Sprint", throwIfNotFound: true);
         m_GamePlayActionMap_Jump = m_GamePlayActionMap.FindAction("Jump", throwIfNotFound: true);
         m_GamePlayActionMap_Look = m_GamePlayActionMap.FindAction("Look", throwIfNotFound: true);
+        m_GamePlayActionMap_Attack = m_GamePlayActionMap.FindAction("Attack", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -262,6 +294,7 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_GamePlayActionMap_Sprint;
     private readonly InputAction m_GamePlayActionMap_Jump;
     private readonly InputAction m_GamePlayActionMap_Look;
+    private readonly InputAction m_GamePlayActionMap_Attack;
     public struct GamePlayActionMapActions
     {
         private @MyGameInputActions m_Wrapper;
@@ -270,6 +303,7 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
         public InputAction @Sprint => m_Wrapper.m_GamePlayActionMap_Sprint;
         public InputAction @Jump => m_Wrapper.m_GamePlayActionMap_Jump;
         public InputAction @Look => m_Wrapper.m_GamePlayActionMap_Look;
+        public InputAction @Attack => m_Wrapper.m_GamePlayActionMap_Attack;
         public InputActionMap Get() { return m_Wrapper.m_GamePlayActionMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -291,6 +325,9 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
             @Look.started += instance.OnLook;
             @Look.performed += instance.OnLook;
             @Look.canceled += instance.OnLook;
+            @Attack.started += instance.OnAttack;
+            @Attack.performed += instance.OnAttack;
+            @Attack.canceled += instance.OnAttack;
         }
 
         private void UnregisterCallbacks(IGamePlayActionMapActions instance)
@@ -307,6 +344,9 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
             @Look.started -= instance.OnLook;
             @Look.performed -= instance.OnLook;
             @Look.canceled -= instance.OnLook;
+            @Attack.started -= instance.OnAttack;
+            @Attack.performed -= instance.OnAttack;
+            @Attack.canceled -= instance.OnAttack;
         }
 
         public void RemoveCallbacks(IGamePlayActionMapActions instance)
@@ -348,5 +388,6 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
         void OnSprint(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
+        void OnAttack(InputAction.CallbackContext context);
     }
 }
