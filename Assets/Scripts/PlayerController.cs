@@ -14,7 +14,6 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float _speedChangeRate = 10.0f;
     [SerializeField] private float _verticalSpeed;
     [SerializeField] private bool _grounded;
-    [SerializeField] private Transform _camFollowTarget;
 
     // Animations
     private readonly int JUMP_ANIMATION_ID = Animator.StringToHash("Jump");
@@ -29,20 +28,16 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     public float RunningSpeed = 6.7f;
 
-    public bool SinglePlayerMode = false;
     private void Awake()
     {
         _animator = GetComponent<Animator>();
         _clientNetworkAnimator = GetComponent<ClientNetworkAnimator>();
         _characterController = GetComponent<CharacterController>();
-#if !UNITY_EDITOR
-        SinglePlayerMode = false;
-#endif
     }
 
     void Start()
     {
-        if (!SinglePlayerMode && !IsOwner) return;
+        if (!IsOwner) return;
         _inputReader.EnableGamePlayActionMap();
         _inputReader.OnMove += InputReader_MoveEvent;
         _inputReader.OnSprintChanged += InputReader_OnSprintChanged;
@@ -53,7 +48,7 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        if (!SinglePlayerMode && !IsOwner) return;
+        if (!IsOwner) return;
         _inputReader.OnMove -= InputReader_MoveEvent;
         _inputReader.OnSprintChanged -= InputReader_OnSprintChanged;
         _inputReader.OnJumpStarted -= InputReader_OnJumpStarted;
@@ -65,7 +60,7 @@ public class PlayerController : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!SinglePlayerMode && !IsOwner) return;
+        if (!IsOwner) return;
         Move();
         HandleGravity();
     }
@@ -76,14 +71,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (_characterController.isGrounded)
         {
-            if (SinglePlayerMode) 
-            {
-                _animator.SetTrigger(JUMP_ANIMATION_ID);
-            }
-            else
-            {
-                _clientNetworkAnimator.SetTrigger(JUMP_ANIMATION_ID);
-            }
+            _clientNetworkAnimator.SetTrigger(JUMP_ANIMATION_ID);
             // Prevent the character from moving, because the player is in preparing jump motion
             lockHorizontalMovement = true;
         }
@@ -94,14 +82,8 @@ public class PlayerController : NetworkBehaviour
         {
             float jumpHeight = 1.5f;
             _verticalSpeed = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
-            if (SinglePlayerMode)
-            {
-                _animator.ResetTrigger(JUMP_ANIMATION_ID);
-            }
-            else
-            {
-                _clientNetworkAnimator.ResetTrigger(JUMP_ANIMATION_ID);
-            }
+
+            _clientNetworkAnimator.ResetTrigger(JUMP_ANIMATION_ID);
             lockHorizontalMovement = false;
         }
     }
