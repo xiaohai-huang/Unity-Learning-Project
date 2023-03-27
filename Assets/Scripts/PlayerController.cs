@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -14,6 +15,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float _speedChangeRate = 10.0f;
     [SerializeField] private float _verticalSpeed;
     [SerializeField] private bool _grounded;
+    [SerializeField] private Rig _bodyAimRig;
     private Camera _mainCam;
 
     // Animations
@@ -29,6 +31,9 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     public float RunningSpeed = 6.7f;
 
+    public bool IsAiming { get; private set; }
+
+
     private void Awake()
     {
         _animator = GetComponent<Animator>();
@@ -43,6 +48,8 @@ public class PlayerController : NetworkBehaviour
         _inputReader.OnMove += InputReader_MoveEvent;
         _inputReader.OnSprintChanged += InputReader_OnSprintChanged;
         _inputReader.OnJumpStarted += InputReader_OnJumpStarted;
+        _inputReader.OnAimStartedEvent += InputReader_OnAimStartedEvent;
+        _inputReader.OnAimEndEvent += InputReader_OnAimEndEvent;
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
         _mainCam = Camera.main;
@@ -54,6 +61,8 @@ public class PlayerController : NetworkBehaviour
         _inputReader.OnMove -= InputReader_MoveEvent;
         _inputReader.OnSprintChanged -= InputReader_OnSprintChanged;
         _inputReader.OnJumpStarted -= InputReader_OnJumpStarted;
+        _inputReader.OnAimStartedEvent -= InputReader_OnAimStartedEvent;
+        _inputReader.OnAimEndEvent -= InputReader_OnAimEndEvent;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         base.OnNetworkDespawn();
@@ -67,6 +76,7 @@ public class PlayerController : NetworkBehaviour
         RotateCharacter();
         MoveCharacter();
         HandleGravity();
+        HandleBodyAim();
     }
 
 
@@ -82,7 +92,7 @@ public class PlayerController : NetworkBehaviour
     }
 
     /// <summary>
-    /// Invocked by animation event to add vertical jump speed
+    /// Invoked by animation event to add vertical jump speed
     /// </summary>
     public void AddJumpSpeed()
     {
@@ -106,6 +116,17 @@ public class PlayerController : NetworkBehaviour
         _movementInput = movementInput;
     }
 
+    private void InputReader_OnAimStartedEvent()
+    {
+        IsAiming = true;
+    }
+
+    private void InputReader_OnAimEndEvent()
+    {
+        IsAiming = false;
+    }
+
+
     private void UpdateSpeed()
     {
         float targetSpeed = _sprinting ? RunningSpeed : WalkSpeed;
@@ -124,12 +145,26 @@ public class PlayerController : NetworkBehaviour
     }
 
     /// <summary>
-    /// Rotates the character towards its movement direction based on the camera’s forward vector.
+    /// 
     /// </summary>
     private void RotateCharacter()
     {
-        if (_movementInput != Vector2.zero)
+        if (IsAiming)
         {
+            // Rotates the player towards camera's forward vector.
+            Vector3 camDir = Vector3.ProjectOnPlane(_mainCam.transform.forward, Vector3.up).normalized;
+
+            // Calculate the target rotation
+            Quaternion targetRotation = Quaternion.LookRotation(camDir, Vector3.up);
+            float rotationSpeed = 10f;
+
+            // Smoothly rotate towards the target rotation
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+        else if (_movementInput != Vector2.zero)
+        {
+            // Rotates the character towards its movement direction based on the cameraï¿½s forward vector.
+
             Vector3 inputDir = new Vector3(_movementInput.x, 0, _movementInput.y);
             // Project the camera's forward vector onto the XZ plane and normalize it
             Vector3 camDir = Vector3.ProjectOnPlane(_mainCam.transform.forward, Vector3.up).normalized;
@@ -154,8 +189,29 @@ public class PlayerController : NetworkBehaviour
     {
         if (lockHorizontalMovement) return;
 
-        _characterController.Move(_speed * Time.deltaTime * transform.forward +
+        if (IsAiming)
+        {
+            Vector3 inputDir = new Vector3(_movementInput.x, 0, _movementInput.y);
+            // Project the camera's forward vector onto the XZ plane and normalize it
+            Vector3 camDir = Vector3.ProjectOnPlane(_mainCam.transform.forward, Vector3.up).normalized;
+
+            // Calculate the forward and right vectors relative to the camera
+            Vector3 forward = camDir;
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+
+            // Calculate the adjusted direction based on the input and camera vectors
+            Vector3 adjustedDir = (forward * inputDir.z + right * inputDir.x).normalized;
+            var horizontal = _speed * adjustedDir;
+
+            _characterController.Move(_speed * Time.deltaTime * adjustedDir +
+                        new Vector3(0, _verticalSpeed, 0) * Time.deltaTime);
+        }
+        else
+
+        {
+            _characterController.Move(_speed * Time.deltaTime * transform.forward +
                 new Vector3(0, _verticalSpeed, 0) * Time.deltaTime);
+        }
         _animator.SetFloat("Speed", _speed);
     }
 
@@ -171,6 +227,23 @@ public class PlayerController : NetworkBehaviour
         }
         _grounded = _characterController.isGrounded;
         _animator.SetBool("Grounded", _grounded);
+    }
+
+    readonly float _bodyTransitionSpeed = 2f;
+    private void HandleBodyAim()
+    {
+        // Disable body aim of the player is looking the back of the player while standing.
+        Vector3 camDir = Vector3.ProjectOnPlane(_mainCam.transform.forward, Vector3.up).normalized;
+        var degrees = Vector3.Angle(transform.forward, camDir);
+        if (degrees > 140)
+        {
+            _bodyAimRig.weight = Mathf.Lerp(_bodyAimRig.weight, 0, _bodyTransitionSpeed * Time.deltaTime);
+        }
+        else
+        {
+            _bodyAimRig.weight = Mathf.Lerp(_bodyAimRig.weight, 1, _bodyTransitionSpeed * Time.deltaTime);
+
+        }
     }
 }
 
