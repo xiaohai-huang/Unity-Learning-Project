@@ -14,6 +14,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float _speedChangeRate = 10.0f;
     [SerializeField] private float _verticalSpeed;
     [SerializeField] private bool _grounded;
+    private Camera _mainCam;
 
     // Animations
     private readonly int JUMP_ANIMATION_ID = Animator.StringToHash("Jump");
@@ -44,6 +45,7 @@ public class PlayerController : NetworkBehaviour
         _inputReader.OnJumpStarted += InputReader_OnJumpStarted;
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+        _mainCam = Camera.main;
     }
 
     public override void OnNetworkDespawn()
@@ -61,7 +63,9 @@ public class PlayerController : NetworkBehaviour
     void Update()
     {
         if (!IsOwner) return;
-        Move();
+        UpdateSpeed();
+        RotateCharacter();
+        MoveCharacter();
         HandleGravity();
     }
 
@@ -76,6 +80,10 @@ public class PlayerController : NetworkBehaviour
             lockHorizontalMovement = true;
         }
     }
+
+    /// <summary>
+    /// Invocked by animation event to add vertical jump speed
+    /// </summary>
     public void AddJumpSpeed()
     {
         if (_characterController.isGrounded)
@@ -97,14 +105,12 @@ public class PlayerController : NetworkBehaviour
     {
         _movementInput = movementInput;
     }
-    private void Move()
+
+    private void UpdateSpeed()
     {
         float targetSpeed = _sprinting ? RunningSpeed : WalkSpeed;
         if (_movementInput == Vector2.zero) targetSpeed = 0.0f;
-
-        // current horizontal speed
         float currentHorizontalSpeed = new Vector3(_characterController.velocity.x, 0f, _characterController.velocity.z).magnitude;
-        // acclerate or decelerate the current speed to the target speed
         float speedTolerance = 0.1f;
         if (currentHorizontalSpeed < targetSpeed - speedTolerance ||
            currentHorizontalSpeed > targetSpeed + speedTolerance)
@@ -115,22 +121,37 @@ public class PlayerController : NetworkBehaviour
         {
             _speed = targetSpeed;
         }
+    }
 
-        // Rotate the player facing direction
+    /// <summary>
+    /// Rotates the character towards its movement direction based on the camera’s forward vector.
+    /// </summary>
+    private void RotateCharacter()
+    {
         if (_movementInput != Vector2.zero)
         {
             Vector3 inputDir = new Vector3(_movementInput.x, 0, _movementInput.y);
-            Vector3 camDir = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
+            // Project the camera's forward vector onto the XZ plane and normalize it
+            Vector3 camDir = Vector3.ProjectOnPlane(_mainCam.transform.forward, Vector3.up).normalized;
 
+            // Calculate the forward and right vectors relative to the camera
             Vector3 forward = camDir;
             Vector3 right = Vector3.Cross(Vector3.up, forward);
+
+            // Calculate the adjusted direction based on the input and camera vectors
             Vector3 adjustedDir = (forward * inputDir.z + right * inputDir.x).normalized;
 
-
+            // Calculate the target rotation based on the adjusted direction
             Quaternion targetRotation = Quaternion.LookRotation(adjustedDir, Vector3.up);
             float rotationSpeed = 10f;
+
+            // Smoothly rotate towards the target rotation
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
+    }
+
+    private void MoveCharacter()
+    {
         if (lockHorizontalMovement) return;
 
         _characterController.Move(_speed * Time.deltaTime * transform.forward +
