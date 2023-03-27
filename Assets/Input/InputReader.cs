@@ -11,7 +11,8 @@ public class InputReader : ScriptableObject, MyGameInputActions.IGamePlayActionM
     public event UnityAction<Vector2> OnLookEvent;
     public event UnityAction OnAttackStartedEvent;
     public event UnityAction OnAttackEndEvent;
-
+    public event UnityAction OnAimStartedEvent;
+    public event UnityAction OnAimEndEvent;
 
 
     private MyGameInputActions _inputActions;
@@ -89,5 +90,17 @@ public class InputReader : ScriptableObject, MyGameInputActions.IGamePlayActionM
             OnAttackEndEvent?.Invoke();
         }
         
+    }
+
+    public void OnAim(InputAction.CallbackContext context)
+    {
+        if (context.phase == InputActionPhase.Performed)
+        {
+            OnAimStartedEvent?.Invoke();
+        }
+        else if (context.phase == InputActionPhase.Canceled)
+        {
+            OnAimEndEvent?.Invoke();
+        }
     }
 }

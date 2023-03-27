@@ -71,6 +71,15 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Aim"",
+                    ""type"": ""Button"",
+                    ""id"": ""7311a314-bbcb-4fe9-bee7-51dc2da40b7e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -205,6 +214,28 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Attack"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""27fe34dc-e2b2-4d47-aad0-ea7652b21dee"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Aim"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""14333905-eead-4440-a28e-f856d0c10e56"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Aim"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -229,6 +260,7 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
         m_GamePlayActionMap_Jump = m_GamePlayActionMap.FindAction("Jump", throwIfNotFound: true);
         m_GamePlayActionMap_Look = m_GamePlayActionMap.FindAction("Look", throwIfNotFound: true);
         m_GamePlayActionMap_Attack = m_GamePlayActionMap.FindAction("Attack", throwIfNotFound: true);
+        m_GamePlayActionMap_Aim = m_GamePlayActionMap.FindAction("Aim", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -295,6 +327,7 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_GamePlayActionMap_Jump;
     private readonly InputAction m_GamePlayActionMap_Look;
     private readonly InputAction m_GamePlayActionMap_Attack;
+    private readonly InputAction m_GamePlayActionMap_Aim;
     public struct GamePlayActionMapActions
     {
         private @MyGameInputActions m_Wrapper;
@@ -304,6 +337,7 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
         public InputAction @Jump => m_Wrapper.m_GamePlayActionMap_Jump;
         public InputAction @Look => m_Wrapper.m_GamePlayActionMap_Look;
         public InputAction @Attack => m_Wrapper.m_GamePlayActionMap_Attack;
+        public InputAction @Aim => m_Wrapper.m_GamePlayActionMap_Aim;
         public InputActionMap Get() { return m_Wrapper.m_GamePlayActionMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -328,6 +362,9 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
             @Attack.started += instance.OnAttack;
             @Attack.performed += instance.OnAttack;
             @Attack.canceled += instance.OnAttack;
+            @Aim.started += instance.OnAim;
+            @Aim.performed += instance.OnAim;
+            @Aim.canceled += instance.OnAim;
         }
 
         private void UnregisterCallbacks(IGamePlayActionMapActions instance)
@@ -347,6 +384,9 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
             @Attack.started -= instance.OnAttack;
             @Attack.performed -= instance.OnAttack;
             @Attack.canceled -= instance.OnAttack;
+            @Aim.started -= instance.OnAim;
+            @Aim.performed -= instance.OnAim;
+            @Aim.canceled -= instance.OnAim;
         }
 
         public void RemoveCallbacks(IGamePlayActionMapActions instance)
@@ -389,5 +429,6 @@ public partial class @MyGameInputActions: IInputActionCollection2, IDisposable
         void OnJump(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
         void OnAttack(InputAction.CallbackContext context);
+        void OnAim(InputAction.CallbackContext context);
     }
 }
