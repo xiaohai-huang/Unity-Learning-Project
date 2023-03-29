@@ -1,25 +1,22 @@
 using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using UnityEngine.Events;
 
 public class PlayerController : NetworkBehaviour
 {
     [SerializeField] protected InputReader _inputReader;
-    private Animator _animator;
-    private ClientNetworkAnimator _clientNetworkAnimator;
+
     private CharacterController _characterController;
     [SerializeField] private Vector2 _movementInput;
     private bool _sprinting;
-    [SerializeField] private float _speed;
+    public float Speed { get; private set; }
     [SerializeField] private float _speedChangeRate = 10.0f;
     [SerializeField] private float _verticalSpeed;
-    [SerializeField] private bool _grounded;
+    public bool Grounded { get; private set; }
     [SerializeField] private Rig _bodyAimRig;
     private Camera _mainCam;
 
-    // Animations
-    private readonly int JUMP_ANIMATION_ID = Animator.StringToHash("Jump");
 
     /// <summary>
     /// Walking speed in m/s
@@ -33,13 +30,9 @@ public class PlayerController : NetworkBehaviour
 
     public bool IsAiming { get; private set; }
 
+    public UnityAction OnAddJumpSpeed;
 
-    private void Awake()
-    {
-        _animator = GetComponent<Animator>();
-        _clientNetworkAnimator = GetComponent<ClientNetworkAnimator>();
-        _characterController = GetComponent<CharacterController>();
-    }
+
 
     void Start()
     {
@@ -50,6 +43,7 @@ public class PlayerController : NetworkBehaviour
         _inputReader.OnJumpStarted += InputReader_OnJumpStarted;
         _inputReader.OnAimStartedEvent += InputReader_OnAimStartedEvent;
         _inputReader.OnAimEndEvent += InputReader_OnAimEndEvent;
+        _characterController = GetComponent<CharacterController>();
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
         _mainCam = Camera.main;
@@ -85,7 +79,6 @@ public class PlayerController : NetworkBehaviour
     {
         if (_characterController.isGrounded)
         {
-            _clientNetworkAnimator.SetTrigger(JUMP_ANIMATION_ID);
             // Prevent the character from moving, because the player is in preparing jump motion
             lockHorizontalMovement = true;
         }
@@ -101,8 +94,8 @@ public class PlayerController : NetworkBehaviour
             float jumpHeight = 1.5f;
             _verticalSpeed = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
 
-            _clientNetworkAnimator.ResetTrigger(JUMP_ANIMATION_ID);
             lockHorizontalMovement = false;
+            OnAddJumpSpeed?.Invoke();
         }
     }
 
@@ -136,11 +129,11 @@ public class PlayerController : NetworkBehaviour
         if (currentHorizontalSpeed < targetSpeed - speedTolerance ||
            currentHorizontalSpeed > targetSpeed + speedTolerance)
         {
-            _speed = Mathf.Lerp(_speed, targetSpeed, Time.deltaTime * _speedChangeRate);
+            Speed = Mathf.Lerp(Speed, targetSpeed, Time.deltaTime * _speedChangeRate);
         }
         else
         {
-            _speed = targetSpeed;
+            Speed = targetSpeed;
         }
     }
 
@@ -201,18 +194,17 @@ public class PlayerController : NetworkBehaviour
 
             // Calculate the adjusted direction based on the input and camera vectors
             Vector3 adjustedDir = (forward * inputDir.z + right * inputDir.x).normalized;
-            var horizontal = _speed * adjustedDir;
 
-            _characterController.Move(_speed * Time.deltaTime * adjustedDir +
+            _characterController.Move(Speed * Time.deltaTime * adjustedDir +
                         new Vector3(0, _verticalSpeed, 0) * Time.deltaTime);
         }
         else
 
         {
-            _characterController.Move(_speed * Time.deltaTime * transform.forward +
+            _characterController.Move(Speed * Time.deltaTime * transform.forward +
                 new Vector3(0, _verticalSpeed, 0) * Time.deltaTime);
         }
-        _animator.SetFloat("Speed", _speed);
+
     }
 
     private void HandleGravity()
@@ -225,8 +217,7 @@ public class PlayerController : NetworkBehaviour
         {
             _verticalSpeed += Physics.gravity.y * Time.deltaTime;
         }
-        _grounded = _characterController.isGrounded;
-        _animator.SetBool("Grounded", _grounded);
+        Grounded = _characterController.isGrounded;
     }
 
     readonly float _bodyTransitionSpeed = 2f;
