@@ -1,6 +1,5 @@
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Animations.Rigging;
 using UnityEngine.Events;
 
 public class PlayerController : NetworkBehaviour
@@ -14,7 +13,6 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float _speedChangeRate = 10.0f;
     [SerializeField] private float _verticalSpeed;
     public bool Grounded { get; private set; }
-    [SerializeField] private Rig _bodyAimRig;
     private Camera _mainCam;
 
 
@@ -70,7 +68,6 @@ public class PlayerController : NetworkBehaviour
         RotateCharacter();
         MoveCharacter();
         HandleGravity();
-        HandleBodyAim();
     }
 
 
@@ -89,6 +86,7 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     public void AddJumpSpeed()
     {
+        if (!IsOwner) return;
         if (_characterController.isGrounded)
         {
             float jumpHeight = 1.5f;
@@ -220,21 +218,5 @@ public class PlayerController : NetworkBehaviour
         Grounded = _characterController.isGrounded;
     }
 
-    readonly float _bodyTransitionSpeed = 2f;
-    private void HandleBodyAim()
-    {
-        // Disable body aim of the player is looking the back of the player while standing.
-        Vector3 camDir = Vector3.ProjectOnPlane(_mainCam.transform.forward, Vector3.up).normalized;
-        var degrees = Vector3.Angle(transform.forward, camDir);
-        if (degrees > 140)
-        {
-            _bodyAimRig.weight = Mathf.Lerp(_bodyAimRig.weight, 0, _bodyTransitionSpeed * Time.deltaTime);
-        }
-        else
-        {
-            _bodyAimRig.weight = Mathf.Lerp(_bodyAimRig.weight, 1, _bodyTransitionSpeed * Time.deltaTime);
-
-        }
-    }
 }
 

@@ -37,19 +37,19 @@ public class WeaponHolder : MonoBehaviour
     float _transitionSpeed = 10f;
     void Update()
     {
-        if (_playerController.IsAiming)
-        {
-            _gunAimingRig.weight = Mathf.Lerp(_gunAimingRig.weight, 1, _transitionSpeed * Time.deltaTime);
-            _gunIdleRig.weight = Mathf.Lerp(_gunIdleRig.weight, 0, _transitionSpeed * Time.deltaTime);
-        }
-        else
-        {
-            _gunAimingRig.weight = Mathf.Lerp(_gunAimingRig.weight, 0, _transitionSpeed * Time.deltaTime);
-            _gunIdleRig.weight = Mathf.Lerp(_gunIdleRig.weight, 1, _transitionSpeed * Time.deltaTime);
-            ActiveWeapon.StopFire();
-        }
+        //if (_playerController.IsAiming)
+        //{
+        //    _gunAimingRig.weight = Mathf.Lerp(_gunAimingRig.weight, 1, _transitionSpeed * Time.deltaTime);
+        //    _gunIdleRig.weight = Mathf.Lerp(_gunIdleRig.weight, 0, _transitionSpeed * Time.deltaTime);
+        //}
+        //else
+        //{
+        //    _gunAimingRig.weight = Mathf.Lerp(_gunAimingRig.weight, 0, _transitionSpeed * Time.deltaTime);
+        //    _gunIdleRig.weight = Mathf.Lerp(_gunIdleRig.weight, 1, _transitionSpeed * Time.deltaTime);
+        //    ActiveWeapon.StopFire();
+        //}
 
-        _leftHandIKTarget.SetPositionAndRotation(ActiveWeapon.LeftHandGrip.position, ActiveWeapon.LeftHandGrip.transform.rotation);
-        _rightHandIKTarget.SetPositionAndRotation(ActiveWeapon.RightHandGrip.position, ActiveWeapon.RightHandGrip.transform.rotation);
+        //_leftHandIKTarget.SetPositionAndRotation(ActiveWeapon.LeftHandGrip.position, ActiveWeapon.LeftHandGrip.transform.rotation);
+        //_rightHandIKTarget.SetPositionAndRotation(ActiveWeapon.RightHandGrip.position, ActiveWeapon.RightHandGrip.transform.rotation);
     }
 }
